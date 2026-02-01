@@ -1,0 +1,47 @@
+name: Generate TWRP Device Tree
+
+on:
+  workflow_dispatch:
+    inputs:
+      device_name:
+        description: 'Device Name'
+        required: true
+        default: 'honor50se'
+      manufacturer:
+        description: 'Manufacturer'
+        required: true
+        default: 'honor'
+      codename:
+        description: 'Codename'
+        required: true
+        default: 'honor50se'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install Python and dependencies
+        run: |
+          python3 -m pip install twrpdtgen
+      
+      - name: Generate device tree from recovery image
+        run: |
+          if [ -f "Images/recovery_a.img" ]; then
+            python3 -m twrpdtgen Images/recovery_a.img
+            mv output/honor/honor50se device_tree
+          elif [ -f "Images/recovery.img" ]; then
+            python3 -m twrpdtgen Images/recovery.img
+            mv output/honor/honor50se device_tree
+          else
+            echo "No recovery image found in Images directory"
+            exit 1
+          fi
+      
+      - name: Upload device tree
+        uses: actions/upload-artifact@v3
+        with:
+          name: device-tree
+          path: device_tree/
