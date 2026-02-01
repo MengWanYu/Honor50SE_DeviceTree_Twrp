@@ -75,27 +75,60 @@ jobs:
       - name: 生成设备树
         run: |
           echo "=== 生成设备树 ==="
-          IMAGE_FILE="Images/${{ github.event.inputs.recovery_image }}"
           
-          # 设置输出路径
-          OUTPUT_DIR="output/${{ github.event.inputs.manufacturer }}/${{ github.event.inputs.codename }}"
+          # 尝试多个镜像文件，按优先级顺序
+          IMAGE_FILES=(
+            "Images/${{ github.event.inputs.recovery_image }}"
+            "Images/recovery_a.img"
+            "Images/recovery.img"
+            "Images/boot_a.img"
+            "Images/recovery_ramdisk_a.img"
+          )
           
-          echo "输入镜像: $IMAGE_FILE"
-          echo "输出目录: $OUTPUT_DIR"
-          echo "设备名称: ${{ github.event.inputs.device_name }}"
-          echo "制造商: ${{ github.event.inputs.manufacturer }}"
-          echo "代号: ${{ github.event.inputs.codename }}"
+          SUCCESS=0
           
-          # 使用 twrpdtgen 生成设备树
-          python3 -m twrpdtgen "$IMAGE_FILE"
+          for img in "${IMAGE_FILES[@]}"; do
+            if [ -f "$img" ]; then
+              echo "尝试使用镜像: $img"
+              
+              # 检查文件大小
+              FILE_SIZE=$(stat -c%s "$img")
+              echo "文件大小: $FILE_SIZE 字节"
+              
+              if [ "$FILE_SIZE" -lt 1048576 ]; then
+                echo "⚠️  文件太小，跳过"
+                continue
+              fi
+              
+              # 检查文件类型
+              FILE_TYPE=$(file "$img")
+              echo "文件类型: $FILE_TYPE"
+              
+              # 尝试生成设备树
+              echo "开始生成设备树..."
+              python3 -m twrpdtgen "$img" 2>&1 | tee generation.log
+              
+              if [ $? -eq 0 ]; then
+                echo "✅ 设备树生成成功！使用镜像: $img"
+                SUCCESS=1
+                break
+              else
+                echo "❌ 使用 $img 生成失败"
+                if [ -f "generation.log" ]; then
+                  echo "错误日志："
+                  tail -50 generation.log
+                fi
+              fi
+            else
+              echo "⚠️  镜像文件不存在: $img"
+            fi
+            echo "---"
+          done
           
-          # 检查生成结果
-          if [ $? -ne 0 ]; then
-            echo "❌ 设备树生成失败"
+          if [ $SUCCESS -eq 0 ]; then
+            echo "❌ 所有镜像都尝试失败"
             exit 1
           fi
-          
-          echo "✅ 设备树生成完成"
           
           # 列出生成的文件
           if [ -d "output" ]; then
@@ -103,6 +136,13 @@ jobs:
             find output -type f
           else
             echo "⚠️  output 目录不存在"
+            exit 1
+          fi
+          
+          # 显示生成日志的最后部分
+          if [ -f "generation.log" ]; then
+            echo "生成日志（最后50行）："
+            tail -50 generation.log
           fi
       
       # 步骤6：整理设备树文件
