@@ -41,7 +41,7 @@ jobs:
           fi
       
       - name: Upload device tree
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: device-tree
           path: device_tree/
