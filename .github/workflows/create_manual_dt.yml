@@ -1,0 +1,335 @@
+name: Create Manual TWRP Device Tree
+
+on:
+  workflow_dispatch:
+    inputs:
+      device_name:
+        description: 'Device Name'
+        required: true
+        default: 'honor50se'
+      manufacturer:
+        description: 'Manufacturer'
+        required: true
+        default: 'honor'
+      codename:
+        description: 'Codename'
+        required: true
+        default: 'honor50se'
+      platform:
+        description: 'Platform'
+        required: true
+        default: 'mt6833'
+      arch:
+        description: 'Architecture (arm64/arm)'
+        required: true
+        default: 'arm64'
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 创建设备树目录结构
+        run: |
+          echo "=== 创建设备树目录结构 ==="
+          
+          # 创建主要目录
+          mkdir -p device_tree
+          mkdir -p device_tree/recovery/root
+          mkdir -p device_tree/prebuilts
+          
+          echo "✅ 目录结构创建完成"
+      
+      - name: 创建 Android.mk
+        run: |
+          cat > device_tree/Android.mk << 'EOF'
+# Copyright (C) 2025 The TWRP Project
+# SPDX-License-Identifier: Apache-2.0
+
+LOCAL_PATH := $(call my-dir)
+
+ifeq ($(TARGET_DEVICE),${{ github.event.inputs.codename }})
+include $(call all-subdir-makefiles,$(LOCAL_PATH))
+endif
+EOF
+          echo "✅ Android.mk 创建完成"
+      
+      - name: 创建 AndroidProducts.mk
+        run: |
+          cat > device_tree/AndroidProducts.mk << 'EOF'
+# Copyright (C) 2025 The TWRP Project
+# SPDX-License-Identifier: Apache-2.0
+
+PRODUCT_MAKEFILES := \
+    $(LOCAL_DIR)/twrp_${{ github.event.inputs.codename }}.mk
+
+COMMON_LUNCH_CHOICES := \
+    twrp_${{ github.event.inputs.codename }}-user \
+    twrp_${{ github.event.inputs.codename }}-userdebug \
+    twrp_${{ github.event.inputs.codename }}-eng
+EOF
+          echo "✅ AndroidProducts.mk 创建完成"
+      
+      - name: 创建 BoardConfig.mk
+        run: |
+          cat > device_tree/BoardConfig.mk << 'EOF'
+# Copyright (C) 2025 The TWRP Project
+# SPDX-License-Identifier: Apache-2.0
+
+DEVICE_PATH := device/${{ github.event.inputs.manufacturer }}/${{ github.event.inputs.codename }}
+
+# For building with minimal manifest
+ALLOW_MISSING_DEPENDENCIES := true
+
+# Architecture
+TARGET_ARCH := ${{ github.event.inputs.arch }}
+ifeq ($(TARGET_ARCH),arm64)
+TARGET_ARCH_VARIANT := armv8-a
+TARGET_CPU_ABI := arm64-v8a
+TARGET_CPU_ABI2 := 
+TARGET_CPU_VARIANT := generic
+TARGET_CPU_VARIANT_RUNTIME := generic
+else
+TARGET_ARCH_VARIANT := armv7-a-neon
+TARGET_CPU_ABI := armeabi-v7a
+TARGET_CPU_ABI2 := armeabi
+TARGET_CPU_VARIANT := generic
+TARGET_CPU_VARIANT_RUNTIME := cortex-a53
+endif
+
+# APEX
+OVERRIDE_TARGET_FLATTEN_APEX := true
+
+# Bootloader
+TARGET_BOOTLOADER_BOARD_NAME := ${{ github.event.inputs.platform }}
+TARGET_NO_BOOTLOADER := true
+
+# Display
+TARGET_SCREEN_DENSITY := 420
+
+# Kernel
+BOARD_BOOTIMG_HEADER_VERSION := 2
+BOARD_KERNEL_BASE := 0x40078000
+BOARD_KERNEL_CMDLINE := bootopt=64S3,32S2,32S1
+BOARD_KERNEL_PAGESIZE := 2048
+BOARD_RAMDISK_OFFSET := 0x07c08000
+BOARD_KERNEL_TAGS_OFFSET := 0x0bc08000
+BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOTIMG_HEADER_VERSION)
+BOARD_MKBOOTIMG_ARGS += --ramdisk_offset $(BOARD_RAMDISK_OFFSET)
+BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
+BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
+
+# Partitions
+BOARD_FLASH_BLOCK_SIZE := 131072
+BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
+BOARD_HAS_LARGE_FILESYSTEM := true
+BOARD_SYSTEMIMAGE_PARTITION_TYPE := ext4
+BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
+BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
+TARGET_COPY_OUT_VENDOR := vendor
+
+BOARD_SUPER_PARTITION_SIZE := 8589934592
+BOARD_SUPER_PARTITION_GROUPS := ${{ github.event.inputs.manufacturer }}_dynamic_partitions
+BOARD_{{ github.event.inputs.manufacturer | toupper }}_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor product
+BOARD_{{ github.event.inputs.manufacturer | toupper }}_DYNAMIC_PARTITIONS_SIZE := 8587837440
+
+# Platform
+TARGET_BOARD_PLATFORM := ${{ github.event.inputs.platform }}
+
+# Recovery
+TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
+TARGET_USERIMAGES_USE_EXT4 := true
+TARGET_USERIMAGES_USE_F2FS := true
+
+# Security patch level
+VENDOR_SECURITY_PATCH := 2024-01-01
+
+# Verified Boot
+BOARD_AVB_ENABLE := true
+BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 3
+BOARD_AVB_RECOVERY_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_RECOVERY_ALGORITHM := SHA256_RSA4096
+BOARD_AVB_RECOVERY_ROLLBACK_INDEX := 1
+BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 1
+
+# Hack: prevent anti rollback
+PLATFORM_SECURITY_PATCH := 2099-12-31
+VENDOR_SECURITY_PATCH := 2099-12-31
+PLATFORM_VERSION := 16.1.0
+
+# TWRP Configuration
+TW_THEME := portrait_hdpi
+TW_EXTRA_LANGUAGES := true
+TW_SCREEN_BLANK_ON_BOOT := true
+TW_USE_TOOLBOX := true
+
+# TW_NO_USB_STORAGE := true
+TW_HAS_MTP := true
+TW_MTP_DEVICE := "/dev/mtp_usb"
+
+# TW_INCLUDE_LOGCAT := true
+TARGET_USES_LOGD := true
+
+TW_EXCLUDE_APEX := true
+TW_INCLUDE_FASTBOOTD := true
+
+TW_INCLUDE_RESETPROP := true
+TW_INCLUDE_REPACKTOOLS := true
+EOF
+          echo "✅ BoardConfig.mk 创建完成"
+      
+      - name: 创建 device.mk
+        run: |
+          cat > device_tree/device.mk << 'EOF'
+# Copyright (C) 2025 The TWRP Project
+# SPDX-License-Identifier: Apache-2.0
+
+LOCAL_PATH := device/${{ github.event.inputs.manufacturer }}/${{ github.event.inputs.codename }}
+
+# Inherit from those products. Most specific first.
+ifeq ($(TARGET_ARCH),arm64)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+else
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_32_bit.mk)
+endif
+
+# Inherit some common Omni stuff.
+$(call inherit-product, vendor/omni/config/common.mk)
+
+# Inherit from device
+$(call inherit-product, $(LOCAL_PATH)/device.mk)
+
+PRODUCT_DEVICE := ${{ github.event.inputs.codename }}
+PRODUCT_NAME := twrp_${{ github.event.inputs.codename }}
+PRODUCT_BRAND := ${{ github.event.inputs.manufacturer }}
+PRODUCT_MODEL := ${{ github.event.inputs.device_name }}
+PRODUCT_MANUFACTURER := ${{ github.event.inputs.manufacturer }}
+
+PRODUCT_GMS_CLIENTID_BASE := android-${{ github.event.inputs.manufacturer }}
+
+PRODUCT_BUILD_PROP_OVERRIDES += \
+    PRIVATE_BUILD_DESC="${{ github.event.inputs.device_name }}-user 12 SP1.0 release-keys" \
+    TARGET_DEVICE="${{ github.event.inputs.codename }}"
+EOF
+          echo "✅ device.mk 创建完成"
+      
+      - name: 创建 twrp_${{ github.event.inputs.codename }}.mk
+        run: |
+          cat > device_tree/twrp_${{ github.event.inputs.codename }}.mk << 'EOF'
+# Copyright (C) 2025 The TWRP Project
+# SPDX-License-Identifier: Apache-2.0
+
+$(call inherit-product, device/${{ github.event.inputs.manufacturer }}/${{ github.event.inputs.codename }}/device.mk)
+EOF
+          echo "✅ twrp_${{ github.event.inputs.codename }}.mk 创建完成"
+      
+      - name: 创建 recovery.fstab
+        run: |
+          cat > device_tree/recovery/root/recovery.fstab << 'EOF'
+# Android fstab file
+#<src>                                                <mnt_point>  <type>  <mnt_flags>                                                        <fs_mgr_flags>
+
+/dev/block/by-name/boot          /boot          emmc    defaults                                                          defaults
+/dev/block/by-name/recovery       /recovery       emmc    defaults                                                          defaults
+/dev/block/by-name/cache         /cache         ext4    defaults                                                          defaults
+/dev/block/by-name/config        /config         emmc    defaults                                                          defaults
+/dev/block/by-name/data          /data          f2fs    defaults                                                          defaults,encryptable=inline
+/dev/block/by-name/metadata      /metadata       ext4    defaults                                                          defaults
+/dev/block/byngine/product       /product        ext4    defaults                                                          defaults
+/dev/block/by-name/system        /system         ext4    defaults                                                          defaults
+/dev/block/by-name/vendor        /vendor        ext4    defaults                                                          defaults,blockdev=by-name/vendor
+/dev/block/by-name/vendor_boot   /vendor_boot    emmc    defaults                                                          defaults
+/dev/block/by-name/vendor_dlkm   /vendor_dlkm    emmc    defaults                                                          defaults
+/dev/block/by-name/vendor_overlay /vendor_overlay emmc    defaults                                                          defaults
+/dev/block/by-name/cust          /cust           ext4    defaults                                                          defaults
+/dev/block/by-name/misc          /misc           emmc    defaults                                                          defaults
+/dev/block/by-name/preload       /preload        emmc    defaults                                                          defaults
+/dev/block/by-name/protection     /protection      emmc    defaults                                                          defaults
+/dev/block/by-name/protection_b  /protection_b    emmc    defaults                                                          defaults
+/dev/block/by-name/persist       /persist        ext4    defaults                                                          defaults
+/dev/block/by-name/recovery      /recovery       emmc    defaults                                                          defaults
+/dev/block/by-name/scrt          /scrt           emmc    defaults                                                          defaults
+/dev/block/by-name/system_ext    /system_ext     ext4    defaults                                                          defaults
+/dev/block/by-name/tee           /tee            emmc    defaults                                                          defaults
+/dev/block/by-name/uefi          /uefi           vfat    defaults                                                          defaults
+/dev/block/by-name/userdata      /userdata       f2fs    defaults                                                          defaults
+/dev/block/by-name/uefivarstore  /uefivarstore   emmc    defaults                                                          defaults
+/dev/block/by-name/uefivarstore_b /uefivarstore_b emmc    defaults                                                          defaults
+/dev/block/by-name/vbmeta        /vbmeta         emmc    defaults                                                          defaults
+/dev/block/by-name/vbmeta_b      /vbmeta_b       emmc    defaults                                                          defaults
+/dev/block/by-name/vbmeta_system   /vbmeta_system  emmc    defaults                                                          defaults
+/dev/block/by-name/vbmeta_vendor  /vbmeta_vendor  emmc    defaults                                                          defaults
+/dev/block/by-name/vbmeta_system_ext /vbmeta_system_ext emmc    defaults                                                          defaults
+/dev/block/by-name/vbmeta_vendor_dlkm /vbmeta_vendor_dlkm emmc    defaults                                                          defaults
+EOF
+          echo "✅ recovery.fstab 创建完成"
+      
+      - name: 创建 README.md
+        run: |
+          cat > device_tree/README.md << 'EOF'
+# TWRP Device Tree for ${{ github.event.inputs.device_name }}
+
+## Device Specifications
+- **Device Name:** ${{ github.event.inputs.device_name }}
+- **Codename:** ${{ github.event.inputs.codename }}
+- **Manufacturer:** ${{ github.event.inputs.manufacturer }}
+- **Platform:** ${{ github.event.inputs.platform }}
+- **Architecture:** ${{ github.event.inputs.arch }}
+
+## Building
+1. Initialize repo:
+   ```bash
+   repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+   ```
+
+2. Sync sources:
+   ```bash
+   repo sync
+   ```
+
+3. Clone device tree:
+   ```bash
+   git clone https://github.com/${{ github.repository_owner }}/Honor50SE_DeviceTree_Twrp.git -b main device/${{ github.event.inputs.manufacturer }}/${{ github.event.inputs.codename }}
+   ```
+
+4. Build:
+   ```bash
+   source build/envsetup.sh
+   lunch twrp_${{ github.event.inputs.codename }}-eng
+   make recoveryimage
+   ```
+
+## Flashing
+1. Unlock bootloader
+2. Flash recovery image via fastboot:
+   ```bash
+   fastboot flash recovery recovery.img
+   ```
+
+## Notes
+- This is a basic device tree template
+- You may need to adjust partition sizes and offsets based on your device
+- Additional configurations may be required for full functionality
+EOF
+          echo "✅ README.md 创建完成"
+      
+      - name: 上传设备树
+        uses: actions/upload-artifact@v4
+        with:
+          name: twrp-device-tree-${{ github.event.inputs.codename }}
+          path: device_tree/
+      
+      - name: 显示创建信息
+        run: |
+          echo "=== 手动设备树创建完成 ==="
+          echo "设备名称: ${{ github.event.inputs.device_name }}"
+          echo "制造商: ${{ github.event.inputs.manufacturer }}"
+          echo "代号: ${{ github.event.inputs.codename }}"
+          echo "平台: ${{ github.event.inputs.platform }}"
+          echo "架构: ${{ github.event.inputs.arch }}"
+          echo ""
+          echo "设备树文件已上传到 Artifacts"
+          echo "这是一个基本模板，你可能需要根据实际设备配置进行调整"
