@@ -1,7 +1,19 @@
 # OrangeFox Recovery configuration for Honor 50 SE (JLH-AN00)
 
-# Inherit from TWRP configuration
-$(call inherit-product, device/honor/jlhs/twrp_jlhs.mk)
+# Inherit from Android base configuration
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
+
+# Inherit from OrangeFox common configuration
+$(call inherit-product, vendor/orangefox/config/common.mk)
+
+# A/B partition support
+AB_OTA_UPDATER := true
+PRODUCT_USE_DYNAMIC_PARTITIONS := true
+PRODUCT_BUILD_SUPER_PARTITION := false
+
+# Virtual A/B
+$(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
 
 # OrangeFox specific properties
 OF_MAINTAINER := "Community"
