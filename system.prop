@@ -36,9 +36,8 @@ ro.boot.product.device=JLH-AN00
 ro.boot.product.model=JLH-AN00
 ro.boot.product.manufacturer=HONOR
 
-# Security
-ro.secure=1
-ro.allow.mock.location=0
+# Security - Recovery specific
+# Note: ro.secure and ro.allow.mock.location are managed by recovery configuration
 ro.debuggable=1
 persist.sys.usb.config=adb
 
