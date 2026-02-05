@@ -162,7 +162,6 @@ TARGET_USES_LOGD := true
 
 # A/B
 AB_OTA_UPDATER := true
-BOARD_BUILD_SYSTEM_ROOT_IMAGE := false
 
 # A/B partition list
 AB_OTA_PARTITIONS := \
