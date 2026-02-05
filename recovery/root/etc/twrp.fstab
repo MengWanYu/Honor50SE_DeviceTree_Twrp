@@ -1,0 +1,74 @@
+# Honor 50 SE (JLH-AN00) TWRP fstab
+
+# Android fstab file.
+# The filesystem that contains the filesystem checker binary (typically /system) cannot
+# specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
+
+# Device mount point fstype flags
+/dev/block/by-name/boot_a /boot emmc defaults recoveryonly,slotselect
+/dev/block/by-name/boot_b /boot emmc defaults recoveryonly,slotselect
+/dev/block/by-name/recovery_a /recovery emmc defaults recoveryonly,slotselect
+/dev/block/by-name/recovery_b /recovery emmc defaults recoveryonly,slotselect
+/dev/block/by-name/recovery_ramdisk_a /recovery_ramdisk emmc defaults recoveryonly,slotselect
+/dev/block/by-name/recovery_ramdisk_b /recovery_ramdisk emmc defaults recoveryonly,slotselect
+/dev/block/by-name/recovery_vendor_a /recovery_vendor emmc defaults recoveryonly,slotselect
+/dev/block/by-name/recovery_vendor_b /recovery_vendor emmc defaults recoveryonly,slotselect
+/dev/block/by-name/dtb /dtb emmc defaults recoveryonly
+/dev/block/by-name/dtbo /dtbo emmc defaults recoveryonly
+
+# Super partition (dynamic partitions)
+/dev/block/by-name/super / super emmc defaults slotselect
+
+# Data partition (with FBE support)
+/dev/block/by-name/userdata /data f2fs defaults,noatime,lazytime,inlinecrypt,length=0x7FFFFFFF,fsync_mode=nobarrier,reserve_root=32768,resgid=1065,encryptable=aes-256-xts:aes-256-cts:v2,keydirectory=/metadata/vold/metadata_encryption
+
+# Metadata partition
+/dev/block/by-name/metadata /metadata ext4 defaults,noatime,commit=1
+
+# Other partitions
+/dev/block/by-name/pro_info /pro_info emmc defaults defaults
+/dev/block/by-name/protect_f /protect_f emmc defaults defaults
+/dev/block/by-name/protect_s /protect_s emmc defaults defaults
+/dev/block/by-name/persist /persist ext4 defaults defaults
+/dev/block/by-name/nvdata /nvdata ext4 defaults defaults
+/dev/block/by-name/nvram /nvram ext4 defaults defaults
+/dev/block/by-name/secro /secro emmc defaults defaults
+/dev/block/by-name/tee1 /tee1 emmc defaults defaults
+/dev/block/by-name/tee2 /tee2 emmc defaults defaults
+/dev/block/by-name/vboot1 /vboot1 emmc defaults defaults
+/dev/block/by-name/vboot2 /vboot2 emmc defaults defaults
+/dev/block/by-name/keystore /keystore emmc defaults defaults
+/dev/block/by-name/md1img /md1img emmc defaults defaults
+/dev/block/by-name/md1dsp /md1dsp emmc defaults defaults
+/dev/block/by-name/md1arm7 /md1arm7 emmc defaults defaults
+/dev/block/by-name/md1img /md1img emmc defaults defaults
+/dev/block/by-name/md1rom /md1rom emmc defaults defaults
+/dev/block/by-name/cmnlib /cmnlib emmc defaults defaults
+/dev/block/by-name/cmnlib64 /cmnlib64 emmc defaults defaults
+/dev/block/by-name/md32img /md32img emmc defaults defaults
+/dev/block/by-name/mcpimg /mcpimg emmc defaults defaults
+/dev/block/by-name/spmfw /spmfw emmc defaults defaults
+/dev/block/by-name/scp /scp emmc defaults defaults
+/dev/block/by-name/dpm /dpm emmc defaults defaults
+/dev/block/by-name/bootconfig /bootconfig emmc defaults defaults
+/dev/block/by-name/lnv /lnv emmc defaults defaults
+
+# OTG
+/usb-otg /usb-otg vfat defaults voldmanaged=usb_otg:auto
+
+# Virtual partitions for A/B devices (not used on JLH-AN00)
+/dev/block/by-name/system_a /system ext4 defaults ro,slotselect
+/dev/block/by-name/system_b /system ext4 defaults ro,slotselect
+/dev/block/by-name/vendor_a /vendor ext4 defaults ro,slotselect
+/dev/block/by-name/vendor_b /vendor ext4 defaults ro,slotselect
+/dev/block/by-name/product_a /product ext4 defaults ro,slotselect
+/dev/block/by-name/product_b /product ext4 defaults ro,slotselect
+/dev/block/by-name/boot_a /boot emmc defaults ro,slotselect
+/dev/block/by-name/boot_b /boot emmc defaults ro,slotselect
+
+# TWRP backup/restore folders
+/data /data f2fs defaults backup=1
+/system /system ext4 defaults backup=1
+/vendor /vendor ext4 defaults backup=1
+/product /product ext4 defaults backup=1
+/system_ext /system_ext ext4 defaults backup=1

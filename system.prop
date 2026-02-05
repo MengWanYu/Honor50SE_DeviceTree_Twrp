@@ -1,0 +1,55 @@
+# Honor 50 SE (JLH-AN00) System Properties
+
+# Hardware
+ro.hardware.egl=mali
+ro.hardware.vulkan=mali
+ro.hardware.gralloc=mali
+
+# Display
+ro.sf.lcd_density=420
+
+# NFC
+ro.nfc.port=I2C
+
+# Fingerprint
+ro.hardware.fingerprint=goodix
+
+# Audio
+ro.audio.flinger.sbc_multiplex=false
+
+# Telephony
+ro.telephony.default_network=22,22
+persist.dbg.volte_avail_ovr=1
+persist.dbg.vt_avail_ovr=1
+persist.dbg.wfc_avail_ovr=1
+
+# Performance
+ro.config.low_ram=false
+ro.config.zram=true
+ro.config.compaction_perf=enable
+
+# Boot
+ro.boot.hardware=mt6877
+ro.boot.bootloader=unknown
+ro.boot.hardware.revision=JLH-AN00
+ro.boot.product.device=JLH-AN00
+ro.boot.product.model=JLH-AN00
+ro.boot.product.manufacturer=HONOR
+
+# Security
+ro.secure=1
+ro.allow.mock.location=0
+ro.debuggable=1
+persist.sys.usb.config=adb
+
+# Graphics
+debug.sf.disable_backpressure=1
+debug.sf.enable_gl_backpressure=0
+ro.surface_flinger.max_frame_buffer_acquired_buffers=3
+ro.surface_flinger.vsync_event_phase_offset_ns=2000000
+ro.surface_flinger.vsync_sf_phase_offset_ns=6000000
+
+# Media
+media.stagefright.thumbnail.prefer_hw_codecs=true
+ro.media.enc.aud.fileformat=amr
+ro.media.enc.aud.codec=amrnb
