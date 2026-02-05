@@ -164,6 +164,21 @@ TARGET_USES_LOGD := true
 AB_OTA_UPDATER := true
 BOARD_BUILD_SYSTEM_ROOT_IMAGE := false
 
+# A/B partition list
+AB_OTA_PARTITIONS := \
+    boot \
+    system \
+    vendor \
+    product \
+    system_ext \
+    recovery \
+    dtbo \
+    vbmeta \
+    vbmeta_system \
+    vbmeta_vendor \
+    vbmeta_bootloader \
+    bootloader
+
 # Hack: prevent anti rollback
 PLATFORM_SECURITY_PATCH := 2099-12-31
 VENDOR_SECURITY_PATCH := 2099-12-31
