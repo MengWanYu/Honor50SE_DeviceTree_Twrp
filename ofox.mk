@@ -60,21 +60,3 @@ OF_FLASHLIGHT_PATH := "/sys/class/leds/led:switch/flashlight"
 OF_BRIGHTNESS_PATH := "/sys/class/backlight/panel/brightness"
 OF_MAX_BRIGHTNESS := 2047
 OF_DEFAULT_BRIGHTNESS := 1200
-
-# OrangeFox specific packages
-PRODUCT_PACKAGES += \
-    ofox_decrypt \
-    ofox_keymaster \
-    ofox_qseecomd
-
-# OrangeFox specific init scripts
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/recovery/root/etc/ofox.rc:$(TARGET_RECOVERY_ROOT_OUT)/etc/init/ofox.rc
-
-# OrangeFox specific properties
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.orangefox.version=$(OF_VERSION_MAJOR).$(OF_VERSION_MINOR).$(OF_VERSION_MAINTENANCE) \
-    ro.orangefox.device=jlhs \
-    ro.orangefox.display.name=Honor 50 SE \
-    ro.orangefox.cpu=mt6877 \
-    ro.orangefox.board=mt6877
